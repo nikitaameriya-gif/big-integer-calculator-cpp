@@ -1,136 +1,216 @@
 #include "BigInteger.h"
-#include <algorithm>
 
+// ---------------- Constructors ----------------
 BigInteger::BigInteger() {
-    number = "0";
+    negative = false;
+    digits.push_back(0);
 }
 
 BigInteger::BigInteger(string num) {
-    number = num;
+    negative = false;
+    if (num[0] == '-') {
+        negative = true;
+        num = num.substr(1);
+    }
+
+    for (int i = num.size() - 1; i >= 0; i--)
+        digits.push_back(num[i] - '0');
+
+    trim();
 }
 
-bool BigInteger::operator<(const BigInteger& other) {
-    if (number.length() != other.number.length())
-        return number.length() < other.number.length();
+BigInteger::BigInteger(long long num) {
+    if (num < 0) {
+        negative = true;
+        num = -num;
+    } else negative = false;
 
-    return number < other.number;
+    if (num == 0) digits.push_back(0);
+
+    while (num) {
+        digits.push_back(num % 10);
+        num /= 10;
+    }
 }
 
-BigInteger BigInteger::operator+(const BigInteger& other) {
-    string a = number;
-    string b = other.number;
+// ---------------- Utility ----------------
+void BigInteger::trim() {
+    while (digits.size() > 1 && digits.back() == 0)
+        digits.pop_back();
 
-    reverse(a.begin(), a.end());
-    reverse(b.begin(), b.end());
+    if (digits.size() == 1 && digits[0] == 0)
+        negative = false;
+}
 
-    string result = "";
+string BigInteger::toString() const {
+    string s = negative ? "-" : "";
+    for (int i = digits.size() - 1; i >= 0; i--)
+        s += (digits[i] + '0');
+    return s;
+}
+
+ostream& operator<<(ostream &out, const BigInteger &num) {
+    out << num.toString();
+    return out;
+}
+
+// ---------------- Comparison ----------------
+int BigInteger::compareAbs(const BigInteger &a, const BigInteger &b) {
+    if (a.digits.size() != b.digits.size())
+        return a.digits.size() < b.digits.size() ? -1 : 1;
+
+    for (int i = a.digits.size() - 1; i >= 0; i--) {
+        if (a.digits[i] != b.digits[i])
+            return a.digits[i] < b.digits[i] ? -1 : 1;
+    }
+    return 0;
+}
+
+bool BigInteger::operator<(const BigInteger &other) const {
+    if (negative != other.negative)
+        return negative;
+
+    int cmp = compareAbs(*this, other);
+    if (negative)
+        return cmp > 0;
+    return cmp < 0;
+}
+
+bool BigInteger::operator==(const BigInteger &other) const {
+    return negative == other.negative && digits == other.digits;
+}
+
+// ---------------- Absolute operations ----------------
+BigInteger BigInteger::addAbs(const BigInteger &a, const BigInteger &b) {
+    BigInteger res;
+    res.digits.clear();
+
     int carry = 0;
+    int n = max(a.digits.size(), b.digits.size());
 
-    int n = max(a.length(), b.length());
+    for (int i = 0; i < n || carry; i++) {
+        int sum = carry;
+        if (i < a.digits.size()) sum += a.digits[i];
+        if (i < b.digits.size()) sum += b.digits[i];
 
-    for (int i = 0; i < n; i++) {
-        int d1 = (i < a.length()) ? a[i] - '0' : 0;
-        int d2 = (i < b.length()) ? b[i] - '0' : 0;
-
-        int sum = d1 + d2 + carry;
-        result += (sum % 10) + '0';
+        res.digits.push_back(sum % 10);
         carry = sum / 10;
     }
 
-    if (carry)
-        result += carry + '0';
-
-    reverse(result.begin(), result.end());
-
-    return BigInteger(result);
+    return res;
 }
 
-BigInteger BigInteger::operator-(const BigInteger& other) {
-    string a = number;
-    string b = other.number;
+BigInteger BigInteger::subAbs(const BigInteger &a, const BigInteger &b) {
+    BigInteger res;
+    res.digits.clear();
 
-    reverse(a.begin(), a.end());
-    reverse(b.begin(), b.end());
-
-    string result = "";
     int borrow = 0;
 
-    for (int i = 0; i < a.length(); i++) {
-        int d1 = a[i] - '0' - borrow;
-        int d2 = (i < b.length()) ? b[i] - '0' : 0;
-
-        if (d1 < d2) {
-            d1 += 10;
+    for (int i = 0; i < a.digits.size(); i++) {
+        int diff = a.digits[i] - borrow - (i < b.digits.size() ? b.digits[i] : 0);
+        if (diff < 0) {
+            diff += 10;
             borrow = 1;
-        } else {
-            borrow = 0;
+        } else borrow = 0;
+
+        res.digits.push_back(diff);
+    }
+
+    res.trim();
+    return res;
+}
+
+// ---------------- + operator ----------------
+BigInteger BigInteger::operator+(const BigInteger &other) const {
+    if (negative == other.negative) {
+        BigInteger res = addAbs(*this, other);
+        res.negative = negative;
+        return res;
+    }
+
+    if (compareAbs(*this, other) >= 0) {
+        BigInteger res = subAbs(*this, other);
+        res.negative = negative;
+        return res;
+    } else {
+        BigInteger res = subAbs(other, *this);
+        res.negative = other.negative;
+        return res;
+    }
+}
+
+// ---------------- - operator ----------------
+BigInteger BigInteger::operator-(const BigInteger &other) const {
+    BigInteger temp = other;
+    temp.negative = !temp.negative;
+    return *this + temp;
+}
+
+// ---------------- * operator ----------------
+BigInteger BigInteger::operator*(const BigInteger &other) const {
+    BigInteger res;
+    res.digits.assign(digits.size() + other.digits.size(), 0);
+
+    for (int i = 0; i < digits.size(); i++) {
+        for (int j = 0; j < other.digits.size(); j++) {
+            res.digits[i + j] += digits[i] * other.digits[j];
+            res.digits[i + j + 1] += res.digits[i + j] / 10;
+            res.digits[i + j] %= 10;
         }
-
-        result += (d1 - d2) + '0';
     }
 
-    while (result.length() > 1 && result.back() == '0')
-        result.pop_back();
-
-    reverse(result.begin(), result.end());
-
-    return BigInteger(result);
+    res.negative = negative != other.negative;
+    res.trim();
+    return res;
 }
 
-BigInteger BigInteger::operator*(const BigInteger& other) {
-    int n = number.size();
-    int m = other.number.size();
+// ---------------- / operator (simple long division) ----------------
+BigInteger BigInteger::operator/(const BigInteger &other) const {
+    BigInteger dividend = *this;
+    BigInteger divisor = other;
 
-    vector<int> result(n + m, 0);
+    dividend.negative = divisor.negative = false;
 
-    for (int i = n - 1; i >= 0; i--) {
-        for (int j = m - 1; j >= 0; j--) {
-            int mul = (number[i] - '0') * (other.number[j] - '0');
+    BigInteger result;
+    result.digits.assign(dividend.digits.size(), 0);
 
-            int sum = mul + result[i + j + 1];
+    BigInteger current;
 
-            result[i + j + 1] = sum % 10;
-            result[i + j] += sum / 10;
+    for (int i = dividend.digits.size() - 1; i >= 0; i--) {
+        current.digits.insert(current.digits.begin(), dividend.digits[i]);
+        current.trim();
+
+        int x = 0;
+        while (compareAbs(current, divisor) >= 0) {
+            current = subAbs(current, divisor);
+            x++;
         }
+        result.digits[i] = x;
     }
 
-    string ans = "";
-
-    for (int digit : result) {
-        if (!(ans.empty() && digit == 0))
-            ans += digit + '0';
-    }
-
-    if (ans.empty())
-        ans = "0";
-
-    return BigInteger(ans);
-}
-
-BigInteger BigInteger::operator/(const BigInteger& other) {
-    long long a = stoll(number);
-    long long b = stoll(other.number);
-
-    return BigInteger(to_string(a / b));
-}
-
-BigInteger BigInteger::operator%(const BigInteger& other) {
-    long long a = stoll(number);
-    long long b = stoll(other.number);
-
-    return BigInteger(to_string(a % b));
-}
-
-BigInteger BigInteger::operator^(int power) {
-    BigInteger result("1");
-
-    for (int i = 0; i < power; i++) {
-        result = result * (*this);
-    }
-
+    result.negative = negative != other.negative;
+    result.trim();
     return result;
 }
 
-void BigInteger::display() const {
-    cout << number << endl;
+// ---------------- % operator ----------------
+BigInteger BigInteger::operator%(const BigInteger &other) const {
+    BigInteger div = *this / other;
+    return *this - (div * other);
+}
+
+// ---------------- ^ power ----------------
+BigInteger BigInteger::operator^(long long power) const {
+    BigInteger base = *this;
+    BigInteger result("1");
+
+    while (power > 0) {
+        if (power % 2 == 1)
+            result = result * base;
+
+        base = base * base;
+        power /= 2;
+    }
+
+    return result;
 }
