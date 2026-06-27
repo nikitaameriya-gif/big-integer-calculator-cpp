@@ -1,18 +1,35 @@
 #include "BigInteger.h"
 
 int main() {
-    BigInteger a("123456789123456789");
-    BigInteger b("987654321987654321");
+    string s1, s2;
 
-    cout << "A = " << a << endl;
+    cout << "Enter first big integer: ";
+    cin >> s1;
+
+    cout << "Enter second big integer: ";
+    cin >> s2;
+
+    BigInteger a(s1);
+    BigInteger b(s2);
+
+    cout << "\nA = " << a << endl;
     cout << "B = " << b << endl;
 
-    cout << "\nAddition: " << (a + b) << endl;
-    cout << "Subtraction: " << (b - a) << endl;
+    cout << "\n--- Results ---" << endl;
+
+    cout << "Addition: " << (a + b) << endl;
+    cout << "Subtraction (A - B): " << (a - b) << endl;
     cout << "Multiplication: " << (a * b) << endl;
-    cout << "Division: " << (b / a) << endl;
-    cout << "Modulus: " << (b % a) << endl;
-    cout << "Power: " << (BigInteger("12") ^ 5) << endl;
+
+    // Avoid division by zero
+    if (!(b == BigInteger("0"))) {
+        cout << "Division (A / B): " << (a / b) << endl;
+        cout << "Modulus (A % B): " << (a % b) << endl;
+    } else {
+        cout << "Division and Modulus not possible (division by zero)" << endl;
+    }
+
+    cout << "Power (A ^ 2): " << (a ^ 2) << endl;
 
     return 0;
 }
