@@ -1,58 +1,18 @@
 #include "BigInteger.h"
 
 int main() {
-    string num1, num2;
-    char op;
+    BigInteger a("123456789123456789");
+    BigInteger b("987654321987654321");
 
-    cout << "Enter first number: ";
-    cin >> num1;
+    cout << "A = " << a << endl;
+    cout << "B = " << b << endl;
 
-    cout << "Enter operator (+, -, *, /, %, ^): ";
-    cin >> op;
-
-    BigInteger a(num1);
-
-    if (op == '^') {
-        int power;
-        cout << "Enter power: ";
-        cin >> power;
-
-        cout << "Result: ";
-        (a ^ power).display();
-    }
-    else {
-        cout << "Enter second number: ";
-        cin >> num2;
-
-        BigInteger b(num2);
-
-        cout << "Result: ";
-
-        switch (op) {
-            case '+':
-                (a + b).display();
-                break;
-
-            case '-':
-                (a - b).display();
-                break;
-
-            case '*':
-                (a * b).display();
-                break;
-
-            case '/':
-                (a / b).display();
-                break;
-
-            case '%':
-                (a % b).display();
-                break;
-
-            default:
-                cout << "Invalid operator!" << endl;
-        }
-    }
+    cout << "\nAddition: " << (a + b) << endl;
+    cout << "Subtraction: " << (b - a) << endl;
+    cout << "Multiplication: " << (a * b) << endl;
+    cout << "Division: " << (b / a) << endl;
+    cout << "Modulus: " << (b % a) << endl;
+    cout << "Power: " << (BigInteger("12") ^ 5) << endl;
 
     return 0;
 }
