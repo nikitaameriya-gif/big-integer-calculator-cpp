@@ -1,7 +1,7 @@
 # Big Integer Calculator in C++
 
 ## Overview
-This project implements a Big Integer Calculator in C++ that performs arithmetic operations on integers larger than the range supported by standard data types.
+A C++ implementation of a Big Integer Calculator capable of performing arithmetic operations on large integers.
 
 ## Features
 - Addition (+)
@@ -10,12 +10,17 @@ This project implements a Big Integer Calculator in C++ that performs arithmetic
 - Division (/)
 - Modulus (%)
 - Exponentiation (^)
-- Support for negative numbers
 
 ## Technologies Used
 - C++
-- STL (vector, string)
 - Object-Oriented Programming
+- Operator Overloading
+- STL
+
+## File Structure
+- BigInteger.h
+- BigInteger.cpp
+- main.cpp
 
 ## Author
 Nikita Ameriya
